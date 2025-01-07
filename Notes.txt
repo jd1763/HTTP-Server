@@ -1,0 +1,76 @@
+For Step 1:
+-paste this into terminal: python3 server.py (which runs on the default server 8080)
+or python3 server.py (port number) (where you choose the port)
+
+-after doing that: open web browser and do ex: http://localhost:8080
+this should show the login page
+
+-In a new terminal window (so the server keeps running in the original one), 
+type the following command: curl -v http://localhost:45006/
+output: * Host localhost:45006 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:45006...
+* connect to ::1 port 45006 from ::1 port 53478 failed: Connection refused
+*   Trying 127.0.0.1:45006...
+* Connected to localhost (127.0.0.1) port 45006
+> GET / HTTP/1.1
+> Host: localhost:45006
+> User-Agent: curl/8.6.0
+> Accept: */*
+> 
+< HTTP/1.1 200 OK
+< Content-Type: text/html
+* no chunk, no close, no size. Assume close to signal end
+< 
+<h1>Please login</h1>
+   <form action = "http://Jorgeluiss-MacBook-Pro.local:45006" method = "post">
+   Name: <input type = "text" name = "username">  <br/>
+   Password: <input type = "text" name = "password" /> <br/>
+   <input type = "submit" value = "Submit" />
+   </form>
+* Closing connection
+
+- The -v flag makes curl print detailed information about the request and response, 
+showing you the HTTP headers and the body of the response.
+-Look for the HTTP status code in the response (e.g., HTTP/1.1 200 OK)
+
+Testing program:
+1. basic: no username or password posted, no cookies (login) **
+ex: curl http://localhost:8081/ 
+
+2. correct username and password posted, no cookies (success) **
+ex: curl -d "username=bezos&password=amazon" http://localhost:8081/ 
+
+3. non-existent username posted with password, no cookies (bad credentials) **
+ex: curl -d "username=fakeuser&password=randompassword" http://localhost:8080/
+
+4. existing username posted with bad password, no cookies (bad credentials) **
+ex: curl -d "username=bezos&password=wrongpassword" http://localhost:8080/
+
+5. exactly one of username or password posted, other field missing, no cookies(bad credentials) **
+ex: curl -d "username=bezos" http://localhost:8080/
+    or
+    curl -d "password=amazon" http://localhost:8080/
+
+6. no username or password posted, valid cookie (success) **
+Obtain valid cookie: curl -c cookies.txt -d "username=bezos&password=amazon" http://localhost:8080/
+-c cookies.txt to save cookies received from the server into a file named cookies.txt.
+-d to send data as a POST request.
+then do this: curl -v -b cookies.txt http://localhost:8080/
+
+7. non-existent username or bad password for existing username, valid cookie (success) **
+ex: curl -d "username=bezos&password=wrongpassword" -b "session_id=valid_cookie_value" http://localhost:8080/
+ex: curl -d "username=bezos&password=wrongpassword" -b "session_id=8559920146640738556" http://localhost:8080/
+
+8. correct username and password, valid cookie (success) **
+ex: curl -d "username=bezos&password=amazon" -b "session_id=8559920146640738556" http://localhost:8080/
+
+9. correct username and password, invalid cookie (bad credentials)
+ex: curl -d "username=bezos&password=amazon" -b "session_id=invalid_cookie_value" http://localhost:8080/
+
+10. logout posted, valid cookie (logout) 
+ex: curl -d "action=logout" -b "session_id=8559920146640738556" http://localhost:8080/
+
+11. logout posted, invalid cookie (logout)
+ex: curl -d "action=logout" -b "session_id=invalid_cookie_value" http://localhost:8080/
